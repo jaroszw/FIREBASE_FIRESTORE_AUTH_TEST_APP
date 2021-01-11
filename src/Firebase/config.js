@@ -11,9 +11,13 @@ var firebaseConfig = {
   appId: '1:630773550333:web:5d2821a6fa36a4336f4294',
 };
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+  firebase.initializeApp(firebaseConfig);
 
 export const auth = firebase.auth();
 export const firestore = firebase.firestore();
+
+export const GoogleProvider = new firebase.auth.GoogleAuthProvider();
+GoogleProvider.setCustomParameters({ prompt: 'select_account' });
+export const SignInWithGoogle = () => auth.signInWithPopup(GoogleProvider);
 
 export default firebase;

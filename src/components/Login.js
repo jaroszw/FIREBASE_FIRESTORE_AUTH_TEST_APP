@@ -1,45 +1,49 @@
-import React, { useEffect } from 'react';
-import { Formik, Field, Form } from 'formik';
+import React, { useState } from 'react';
+import { Formik, Field } from 'formik';
 import * as Yup from 'yup';
 
 import { FormWrapper, StyledForm } from '../containers/index';
 import Input from '../containers/Input';
 import Heading from '../containers/Heading';
 
-import { firestore, auth } from '../Firebase/config';
-
-const email = 'jaroszw@gmail.com';
-const password = 'haslotestowe';
+import { firestore, auth, SignInWithGoogle } from '../Firebase/config';
 
 const initialValues = {
+  firstName: '',
   email: '',
   password: '',
 };
 
-const onSubmit = (e) => {
-  e.preventDefault();
-  console.log(email, password);
-  // const handleLogin = ({ email, password }) => {
-  //   auth.createUserWithEmailAndPassword(email, password).then((userAuth) => {
-  //     console.log(userAuth);
-  //   });
-  // };
+const createUserProile = async (userAuth, additionalData = {}) => {
+  if (!userAuth) return;
+  const { uid } = userAuth;
+
+  const userRef = firestore.doc(`users/${uid}`);
+  console.log(userRef);
+  const snapShot = await userRef.get();
+  console.log(snapShot);
+
+  if (!snapShot.exist) {
+    console.log('NI MA');
+  }
+
+  return userRef;
+};
+
+const onSubmit = async ({ email, password, firstName }) => {
+  const { user } = await auth.createUserWithEmailAndPassword(email, password);
+  const additinalData = { firstName };
+  createUserProile(user, additinalData);
 };
 
 const validateSchema = Yup.object({
   email: Yup.string().email('Wrong format').required('Email is required'),
-  password: Yup.string().required('Password is requied'),
+  password: Yup.string()
+    .required('Password is requied')
+    .min(6, 'your password is to short'),
 });
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    
-  };
-
   return (
     <FormWrapper>
       <Heading color="light" bold size="h1">
@@ -54,6 +58,13 @@ const Login = () => {
           return (
             <StyledForm>
               <Field
+                type="text"
+                name="firstName"
+                id="firstName"
+                placeholder="firstName"
+                component={Input}
+              />
+              <Field
                 type="email"
                 name="email"
                 id="email"
@@ -67,11 +78,27 @@ const Login = () => {
                 placeholder="password"
                 component={Input}
               />
-              <button type="submit">Submit</button>
+              <button
+                type="submit"
+                style={{ padding: '10px', cursor: 'pointer' }}
+              >
+                Submit
+              </button>
             </StyledForm>
           );
         }}
       </Formik>
+      <button
+        style={{
+          padding: '10px',
+          cursor: 'pointer',
+          width: '100%',
+          marginTop: '5px',
+        }}
+        onClick={SignInWithGoogle}
+      >
+        Sing In With Google
+      </button>
     </FormWrapper>
   );
 };
