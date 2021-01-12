@@ -1,46 +1,36 @@
-import React, { useState } from 'react';
-import { Formik, Field } from 'formik';
-import * as Yup from 'yup';
+import React, { useEffect } from "react";
+import { Formik, Field } from "formik";
+import * as Yup from "yup";
 
-import { FormWrapper, StyledForm } from '../containers/index';
-import Input from '../containers/Input';
-import Heading from '../containers/Heading';
+import { FormWrapper, StyledForm } from "../containers/index";
+import Input from "../containers/Input";
+import Heading from "../containers/Heading";
 
-import { firestore, auth, SignInWithGoogle } from '../Firebase/config';
+import { auth, SignInWithGoogle } from "../Firebase/config";
+import { handleUserProfile } from "../Firebase/utils";
 
 const initialValues = {
-  firstName: '',
-  email: '',
-  password: '',
+  displayName: "",
+  email: "",
+  password: "",
 };
 
-const createUserProile = async (userAuth, additionalData = {}) => {
-  if (!userAuth) return;
-  const { uid } = userAuth;
-
-  const userRef = firestore.doc(`users/${uid}`);
-  console.log(userRef);
-  const snapShot = await userRef.get();
-  console.log(snapShot);
-
-  if (!snapShot.exist) {
-    console.log('NI MA');
-  }
-
-  return userRef;
-};
-
-const onSubmit = async ({ email, password, firstName }) => {
+const onSubmit = async (values) => {
+  const { email, password, displayName } = values;
   const { user } = await auth.createUserWithEmailAndPassword(email, password);
-  const additinalData = { firstName };
-  createUserProile(user, additinalData);
+  const additinalData = { displayName };
+  await handleUserProfile(user, additinalData);
 };
 
 const validateSchema = Yup.object({
-  email: Yup.string().email('Wrong format').required('Email is required'),
+  email: Yup.string().email("Wrong format").required("Email is required"),
   password: Yup.string()
-    .required('Password is requied')
-    .min(6, 'your password is to short'),
+    .required("Password is requied")
+    .min(6, "your password is to short"),
+});
+
+const mapState = ({ user }) => ({
+  user: user.currentUser,
 });
 
 const Login = () => {
@@ -59,9 +49,9 @@ const Login = () => {
             <StyledForm>
               <Field
                 type="text"
-                name="firstName"
-                id="firstName"
-                placeholder="firstName"
+                name="displayName"
+                id="displayName"
+                placeholder="displayName"
                 component={Input}
               />
               <Field
@@ -80,7 +70,7 @@ const Login = () => {
               />
               <button
                 type="submit"
-                style={{ padding: '10px', cursor: 'pointer' }}
+                style={{ padding: "10px", cursor: "pointer" }}
               >
                 Submit
               </button>
@@ -90,14 +80,25 @@ const Login = () => {
       </Formik>
       <button
         style={{
-          padding: '10px',
-          cursor: 'pointer',
-          width: '100%',
-          marginTop: '5px',
+          padding: "10px",
+          cursor: "pointer",
+          width: "100%",
+          marginTop: "5px",
         }}
         onClick={SignInWithGoogle}
       >
         Sing In With Google
+      </button>
+      <button
+        style={{
+          padding: "10px",
+          cursor: "pointer",
+          width: "100%",
+          marginTop: "5px",
+        }}
+        onClick={auth.signOut()}
+      >
+        Sign Out
       </button>
     </FormWrapper>
   );
